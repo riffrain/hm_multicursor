@@ -1,0 +1,130 @@
+
+/**
+* マルチカーソル for 秀丸
+* 
+* 以下の設定が必要です。
+* その他＞動作環境＞検索＞検索の動作＞検索での表示＞範囲選択
+*/
+//--- 設定 ------------------------------//
+// 一時ファイル名
+$FILENAME = "temp.txt";
+$REP_N = "<__>";
+
+// marker設定
+#MCOLOR = 0xffffff;
+#MBG = 0x3fd0f4;
+#MSTYLE = 11;
+#MODE = 1;
+
+// 検索方法
+// マクロヘルプのsetsearchの項目のフラグを設定してください。
+// 初期値: 0x01000012(大文字/小文字の区別、一周する、正規表現)
+#SEARCH_FLG = 0x01000012;
+
+//----設定ここまで-------------------------//
+
+loaddll "HMJRE.dll";
+setcompatiblemode 0x0010000;
+
+disabledraw;
+
+// 初回起動
+if (!replay) {
+	call Initialize;
+
+// 2回め以降
+} else {
+	call ContinueMacro;
+}
+
+enabledraw;
+
+endmacro;
+
+
+
+/**
+* 初期化関数１回目にコールされる
+*/
+Initialize:
+	if (!selecting) {
+		selectword2;
+	}
+	#tx = seltopx;
+	#ty = seltopy;
+	#ex = selendx;
+	#ey = selendy;
+
+	// 既存のmarkerをすべて削除
+	call DeleteAllMarker;
+
+	moveto #tx, #ty;
+	beginsel;
+	moveto #ex, #ey;
+
+	// markerする
+	colormarker #MCOLOR, #MBG, #MSTYLE, #MODE;
+	
+	// 対象となる文字列の取得
+	$word = gettext(seltopx, seltopy, selendx, selendy);
+
+	// 設定ファイル内で改行を行うと、検索値が正確に取れなくなるので、改行を置き換える
+	$word = dllfuncstr( "ReplaceRegular", "\r", $word, 0, "", 2);
+	$word = dllfuncstr( "ReplaceRegular", "\n", $word, 0, $REP_N, 2);
+
+	// 文字列と一番下のmarkerの位置を書き込み
+	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "word", $word;
+	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "posx", str(selendx);
+	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "posy", str(selendy);
+
+	// すべてのmarkerを選択
+	selectcolormarker;
+
+	return;
+
+/**
+* 2回目以降にコールされる関数
+*/
+ContinueMacro: 
+	// ファイルから対象となる文字列と一番下のmarkerが終わる座標を読み込み
+	$tempfile = currentmacrodirectory + "\\" + $FILENAME;
+	$word = getinistr($tempfile, "temp", "word");
+	$px = getinistr($tempfile, "temp", "posx");
+	$py = getinistr($tempfile, "temp", "posy");
+
+	//正規表現で検索するためエスケープ
+	$word = dllfuncstr( "ReplaceRegular", "(\\||\\?|\\*|\\\\|\\.|\\+|\\[|\\]|\\(|\\)|\\{|\\}|\\$|\\^)", $word, 0, "\\\\\\1", 2);
+	$word = dllfuncstr( "ReplaceRegular", $REP_N, $word, 0, "\\\\n", 2);
+
+	// カーソル位置修正
+	escape;
+	moveto val($px), val($py);
+
+	// 次を検索しmarker
+	setsearch $word, #SEARCH_FLG;
+	finddown2;
+
+	// すでにマーク済みの場合マクロ終了
+	if (marked) {
+		enabledraw;
+		endmacro;
+	}
+	
+	colormarker #MCOLOR, #MBG, #MSTYLE, #MODE;
+	// 選択位置情報の書き込み
+	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "posx", str(selendx);
+	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "posy", str(selendy);
+	// すべてのmarkerを選択
+	selectcolormarker;
+
+	return;
+
+/**
+* 全マーカー削除
+*/
+DeleteAllMarker:
+	deletecolormarkerall;
+	escape;
+	redraw;
+	
+	return;
