@@ -1,4 +1,4 @@
 # hm_multicursor
 
-�G�ۂŁASublimeText��Ctrl+D�V���[�g�J�b�g�̂悤�ȋ@�\���������邽�߂̃}�N��
+秀丸で、SublimeTextのCtrl+Dショートカットのような機能を実現するためのマクロ
 
