@@ -73,7 +73,7 @@ Initialize:
 	$word = dllfuncstr( "ReplaceRegular", "\n", $word, 0, $REP_N, 2);
 
 	// 文字列と一番下のmarkerの位置を書き込み
-	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "word", $word;
+	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "word", "\"" + $word + "\"";
 	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "posx", str(selendx);
 	writeinistr currentmacrodirectory + "\\" + $FILENAME, "temp", "posy", str(selendy);
 

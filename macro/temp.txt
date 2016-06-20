@@ -1,4 +1,4 @@
 [temp]
-word=|aaaaaaaa\\aa|
-posx=12
-posy=7
+word=
+posx=
+posy=
